@@ -2,7 +2,8 @@ import argparse
 from operator import itemgetter
 import nltk
 from features import sent2labels, sent2features
-from active_learning import ALModel
+from active_learning_model import ALModel
+from random_sampling_model import RSModel
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -32,10 +33,17 @@ if __name__ == "__main__":
     y_test = [sent2labels(s) for s in test_sents]
 
     # Training
-    model = ALModel(X_labeled, y_labeled, X_pool, y_pool)
-    print(model.evaluation(X_test, y_test))
+    al_model = ALModel(X_labeled, y_labeled, X_pool, y_pool)
+    rs_model = RSModel(X_labeled, y_labeled, X_pool, y_pool)
 
+    print(al_model.evaluation(X_test, y_test))
+    print(rs_model.evaluation(X_test, y_test))
+    print("---------------------------------")
     for _ in range(300):
-        model.query_selection()
-        model.fit()
-        print(model.evaluation(X_test, y_test))
+        al_model.query_selection()
+        al_model.fit()
+        print(al_model.evaluation(X_test, y_test))
+        rs_model.query_selection()
+        rs_model.fit()
+        print(rs_model.evaluation(X_test, y_test))
+        print("---------------------------------")

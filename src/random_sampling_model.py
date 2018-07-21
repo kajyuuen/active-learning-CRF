@@ -3,9 +3,11 @@ from sklearn_crfsuite import metrics
 import copy
 import numpy as np
 from least_confidence import calculate_least_confidences
+import random
 
-class ALModel:
-    def __init__(self, X_labeled, y_labeled, X_pool, y_pool, query_size = 10):
+class RSModel:
+    def __init__(self, X_labeled, y_labeled, X_pool, y_pool, query_size = 100):
+        random.seed(2)
         self.X_labeled, self.y_labeled = X_labeled, y_labeled
         self.X_pool, self.y_pool = X_pool, y_pool
         self.crf = sklearn_crfsuite.CRF(
@@ -31,18 +33,23 @@ class ALModel:
         if self.query_size > len(self.X_pool):
             print("Empty Pool")
             return 0
-        predict_marginals = self.crf.predict_marginals(self.X_pool)
-        arg_sort_ind = np.argsort(calculate_least_confidences(predict_marginals))[::-1]
 
+        pool_size = len(self.X_pool)
         next_X_pool = copy.deepcopy(self.X_pool)
         next_y_pool = copy.deepcopy(self.y_pool)
-        for least_confidence_ind in arg_sort_ind[:self.query_size]:
-            tmp_X = self.X_pool[least_confidence_ind]
-            tmp_y = self.y_pool[least_confidence_ind]
+
+        delete_inds = []
+        for random_ind in random.sample(range(pool_size), self.query_size):
+            tmp_X = self.X_pool[random_ind]
+            tmp_y = self.y_pool[random_ind]
             self.X_labeled.append(tmp_X)
             self.y_labeled.append(tmp_y)
-            next_X_pool.remove(tmp_X)
-            next_y_pool.remove(tmp_y)
+            delete_inds.append(random_ind)
+
+        delete_inds.sort(reverse = True)
+        for delete_ind in delete_inds:
+            next_X_pool.pop(delete_ind)
+            next_y_pool.pop(delete_ind)
 
         self.X_pool = next_X_pool
         self.y_pool = next_y_pool
