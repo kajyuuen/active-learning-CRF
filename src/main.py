@@ -36,14 +36,14 @@ if __name__ == "__main__":
     al_model = ALModel(X_labeled, y_labeled, X_pool, y_pool)
     rs_model = RSModel(X_labeled, y_labeled, X_pool, y_pool)
 
-    print(al_model.evaluation(X_test, y_test))
-    print(rs_model.evaluation(X_test, y_test))
-    print("---------------------------------")
+    al_score = []
+    rs_score = []
+    al_score.append(al_model.evaluation(X_test, y_test))
+    rs_score.append(rs_model.evaluation(X_test, y_test))
     for _ in range(300):
         al_model.query_selection()
         al_model.fit()
-        print(al_model.evaluation(X_test, y_test))
+        al_score.append(al_model.evaluation(X_test, y_test))
         rs_model.query_selection()
         rs_model.fit()
-        print(rs_model.evaluation(X_test, y_test))
-        print("---------------------------------")
+        rs_score.append(rs_model.evaluation(X_test, y_test))
