@@ -5,16 +5,11 @@ import numpy as np
 from least_confidence import calculate_least_confidences
 
 class ALModel:
-    def __init__(self, X_labeled, y_labeled, X_pool, y_pool, query_size = 1):
+    def __init__(self, X_labeled, y_labeled, X_pool, y_pool, crf, pool_sents, query_size = 1):
         self.X_labeled, self.y_labeled = X_labeled, y_labeled
         self.X_pool, self.y_pool = X_pool, y_pool
-        self.crf = sklearn_crfsuite.CRF(
-            algorithm='lbfgs',
-            c1=0.1,
-            c2=0.1,
-            max_iterations=100,
-            all_possible_transitions=True
-        )
+        self.pool_sents = pool_sents
+        self.crf = crf
         self.fit()
         self.query_size = query_size
         self.labels = list(self.crf.classes_)
@@ -34,12 +29,12 @@ class ALModel:
 
         predict_marginals = self.crf.predict_marginals(self.X_pool)
         arg_sort_ind = np.argsort(calculate_least_confidences(predict_marginals))[::-1]
-
         next_X_pool = copy.deepcopy(self.X_pool)
         next_y_pool = copy.deepcopy(self.y_pool)
 
         delete_inds = []
         for least_confidence_ind in arg_sort_ind[:self.query_size]:
+            print(self.pool_sents[least_confidence_ind])
             tmp_X = self.X_pool[least_confidence_ind]
             tmp_y = self.y_pool[least_confidence_ind]
             self.X_labeled.append(tmp_X)

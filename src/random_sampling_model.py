@@ -6,17 +6,11 @@ from least_confidence import calculate_least_confidences
 import random
 
 class RSModel:
-    def __init__(self, X_labeled, y_labeled, X_pool, y_pool, query_size = 1):
+    def __init__(self, X_labeled, y_labeled, X_pool, y_pool, crf, query_size = 1):
         random.seed(2)
         self.X_labeled, self.y_labeled = X_labeled, y_labeled
         self.X_pool, self.y_pool = X_pool, y_pool
-        self.crf = sklearn_crfsuite.CRF(
-            algorithm='lbfgs',
-            c1=0.1,
-            c2=0.1,
-            max_iterations=100,
-            all_possible_transitions=True
-        )
+        self.crf = crf
         self.fit()
         self.query_size = query_size
         self.labels = list(self.crf.classes_)
