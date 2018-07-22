@@ -1,4 +1,4 @@
-import sklearn_crfsuite
+import pycrfsuite
 import argparse
 import random
 from operator import itemgetter
@@ -39,15 +39,8 @@ if __name__ == "__main__":
     y_test = [sent2labels(s) for s in test_sents]
 
     # Training
-    crf = sklearn_crfsuite.CRF(
-        algorithm='lbfgs',
-        c1=0.1,
-        c2=0.1,
-        max_iterations=100,
-        all_possible_transitions=True
-    )
-    al_model = ALModel(X_labeled, y_labeled, X_pool, y_pool, crf, pool_sents, 5)
-    rs_model = RSModel(X_labeled, y_labeled, X_pool, y_pool, crf, 5)
+    al_model = ALModel(X_labeled, y_labeled, X_pool, y_pool, 5)
+    rs_model = RSModel(X_labeled, y_labeled, X_pool, y_pool, 5)
 
     al_score = []
     rs_score = []
@@ -55,7 +48,7 @@ if __name__ == "__main__":
     print("rs_model", rs_model.evaluation(X_test, y_test))
     print("--------------------------------------------")
     al_score.append(al_model.evaluation(X_test, y_test))
-    rs_score.append(rs_model.evaluation(X_test, y_test))
+    # rs_score.append(rs_model.evaluation(X_test, y_test))
     for _ in range(300):
         al_model.query_selection()
         al_model.fit()

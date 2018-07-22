@@ -4,24 +4,33 @@ import copy
 import numpy as np
 from least_confidence import calculate_least_confidences
 import random
+import pycrfsuite
 
 class RSModel:
-    def __init__(self, X_labeled, y_labeled, X_pool, y_pool, crf, query_size = 1):
+    def __init__(self, X_labeled, y_labeled, X_pool, y_pool, query_size = 1):
         random.seed(2)
         self.X_labeled, self.y_labeled = X_labeled, y_labeled
         self.X_pool, self.y_pool = X_pool, y_pool
-        self.crf = crf
+        self.trainer = pycrfsuite.Trainer(verbose=False)
+        self.trainer.set_params({
+            'c1': 1.0,
+            'c2': 1e-3,
+            'max_iterations': 50,
+            'feature.possible_transitions': True
+        })
         self.fit()
         self.query_size = query_size
-        self.labels = list(self.crf.classes_)
-        self.labels.remove('O')
 
     def fit(self):
-        self.crf.fit(self.X_labeled, self.y_labeled)
+        for xseq, yseq in zip(self.X_labeled, self.y_labeled):
+            self.trainer.append(xseq, yseq)
+        self.trainer.train('rs-model.crfsuite')
 
     def evaluation(self, X_test, y_test):
-        y_pred = self.crf.predict(X_test)
-        return metrics.flat_f1_score(y_test, y_pred, average='weighted', labels=self.labels)
+        tagger = pycrfsuite.Tagger()
+        tagger.open('rs-model.crfsuite')
+        y_pred = [tagger.tag(xseq) for xseq in X_test]
+        return metrics.sequence_accuracy_score(y_test, y_pred)
 
     def query_selection(self):
         if self.query_size > len(self.X_pool):
