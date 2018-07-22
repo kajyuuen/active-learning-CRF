@@ -34,7 +34,7 @@ def bio_classification_report(y_true, y_pred):
 
 class ALModel:
     def __init__(self, X_labeled, y_labeled, X_pool, y_pool, query_size = 1):
-        self.X_labeled, self.y_labeled = X_labeled, y_labeled
+        self.X_train, self.y_train = X_labeled, y_labeled
         self.X_pool, self.y_pool = X_pool, y_pool
         self.trainer = pycrfsuite.Trainer(verbose=False)
         self.trainer.set_params({
@@ -84,12 +84,13 @@ class ALModel:
         next_y_pool = copy.deepcopy(self.y_pool)
 
         delete_inds = []
+        X_train, y_train = [], []
         # HACK: ここが間違っているのでは？
         for least_confidence_ind in arg_sort_ind[:self.query_size]:
             tmp_X = self.X_pool[least_confidence_ind]
             tmp_y = self.y_pool[least_confidence_ind]
-            self.X_labeled.append(tmp_X)
-            self.y_labeled.append(tmp_y)
+            X_train.append(tmp_X)
+            y_train.append(tmp_y)
             delete_inds.append(least_confidence_ind)
 
         delete_inds.sort(reverse = True)
@@ -99,3 +100,5 @@ class ALModel:
 
         self.X_pool = next_X_pool
         self.y_pool = next_y_pool
+        self.X_train = X_train
+        self.y_train = y_train
