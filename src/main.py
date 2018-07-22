@@ -33,8 +33,8 @@ if __name__ == "__main__":
     y_test = [sent2labels(s) for s in test_sents]
 
     # Training
-    al_model = ALModel(X_labeled, y_labeled, X_pool, y_pool)
-    rs_model = RSModel(X_labeled, y_labeled, X_pool, y_pool)
+    al_model = ALModel(X_labeled, y_labeled, X_pool, y_pool, 5)
+    rs_model = RSModel(X_labeled, y_labeled, X_pool, y_pool, 5)
 
     al_score = []
     rs_score = []
@@ -47,3 +47,9 @@ if __name__ == "__main__":
         rs_model.query_selection()
         rs_model.fit()
         rs_score.append(rs_model.evaluation(X_test, y_test))
+
+
+    print("al_score")
+    print(al_score)
+    print("rs_score")
+    print(rs_score)
