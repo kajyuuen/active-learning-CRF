@@ -51,6 +51,5 @@ class ALModel:
             next_X_pool.pop(delete_ind)
             next_y_pool.pop(delete_ind)
 
-
         self.X_pool = next_X_pool
         self.y_pool = next_y_pool
