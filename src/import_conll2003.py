@@ -13,5 +13,5 @@ def iob_sents(file_name):
             sents.append(sent)
             sent = []
         else:
-            sent.append(tuple([data[0], data[1], data[3]]))
+            sent.append(tuple([data[0], data[1], data[2]]))
     return sents

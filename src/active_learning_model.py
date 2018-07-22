@@ -1,12 +1,36 @@
 import sklearn_crfsuite
-from sklearn_crfsuite import metrics
-from sklearn.metrics import classification_report, confusion_matrix
+from sklearn.metrics import classification_report, confusion_matrix, f1_score
 from sklearn.preprocessing import LabelBinarizer
 import sklearn
 import copy
 import numpy as np
 from least_confidence import calculate_least_confidences
 import pycrfsuite
+from itertools import chain
+from sklearn_crfsuite import metrics
+
+def bio_classification_report(y_true, y_pred):
+    """
+    Classification report for a list of BIO-encoded sequences.
+    It computes token-level metrics and discards "O" labels.
+
+    Note that it requires scikit-learn 0.15+ (or a version from github master)
+    to calculate averages properly!
+    """
+    lb = LabelBinarizer()
+    y_true_combined = lb.fit_transform(list(chain.from_iterable(y_true)))
+    y_pred_combined = lb.transform(list(chain.from_iterable(y_pred)))
+
+    tagset = set(lb.classes_) - {'O'}
+    tagset = sorted(tagset, key=lambda tag: tag.split('-', 1)[::-1])
+    class_indices = {cls: idx for idx, cls in enumerate(lb.classes_)}
+
+    return classification_report(
+        y_true_combined,
+        y_pred_combined,
+        labels = [class_indices[cls] for cls in tagset],
+        target_names = tagset,
+    )
 
 class ALModel:
     def __init__(self, X_labeled, y_labeled, X_pool, y_pool, query_size = 1):
@@ -14,9 +38,6 @@ class ALModel:
         self.X_pool, self.y_pool = X_pool, y_pool
         self.trainer = pycrfsuite.Trainer(verbose=False)
         self.trainer.set_params({
-            'c1': 1.0,
-            'c2': 1e-3,
-            'max_iterations': 50,
             'feature.possible_transitions': True
         })
         self.fit()
@@ -31,7 +52,19 @@ class ALModel:
         tagger = pycrfsuite.Tagger()
         tagger.open('al-model.crfsuite')
         y_pred = [tagger.tag(xseq) for xseq in X_test]
-        return metrics.sequence_accuracy_score(y_test, y_pred)
+        labels = list(tagger.labels())
+        labels.remove('O')
+
+        #ans_sum = 0
+        #for test_labels, pred_labels in zip(y_test, y_pred):
+        #    ans = True
+        #    for test_label, pred_label in zip(test_labels, pred_labels):
+        #        if(test_label != pred_label):
+        #            ans = False
+        #            break
+        #    if(ans):
+        #        ans_sum += 1
+        return metrics.flat_f1_score(y_test, y_pred, average='weighted', labels=labels)
 
     def query_selection(self):
         if self.query_size > len(self.X_pool):
@@ -40,17 +73,18 @@ class ALModel:
 
         tagger = pycrfsuite.Tagger()
         tagger.open('al-model.crfsuite')
-        predict_tags = [tagger.tag(xseq) for xseq in self.X_pool]
-        probabilities = []
-        for x_seq, predict_tag in zip(self.X_pool, predict_tags):
+        least_confidences = []
+        for x_seq in self.X_pool:
             tagger.set(x_seq)
-            probabilities.append(tagger.probability(predict_tag))
+            predict_tag = tagger.tag(x_seq)
+            least_confidences.append(1 - tagger.probability(predict_tag))
 
-        arg_sort_ind = np.argsort(probabilities)[::-1]
+        arg_sort_ind = np.argsort(least_confidences)[::-1]
         next_X_pool = copy.deepcopy(self.X_pool)
         next_y_pool = copy.deepcopy(self.y_pool)
 
         delete_inds = []
+        # HACK: ここが間違っているのでは？
         for least_confidence_ind in arg_sort_ind[:self.query_size]:
             tmp_X = self.X_pool[least_confidence_ind]
             tmp_y = self.y_pool[least_confidence_ind]

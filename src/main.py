@@ -14,21 +14,21 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    labeled_size = 10
+    labeled_size = 5
     if(args.test):
         pool_size = 100
         test_size = 100
     else:
-        pool_size = int(len(list(import_conll2003.iob_sents('./data/eng.train')))/5)
-        test_size = int(len(list(import_conll2003.iob_sents('./data/eng.testb')))/5)
+        pool_size = int(len(list(nltk.corpus.conll2002.iob_sents('esp.train'))))
+        test_size = int(len(list(nltk.corpus.conll2002.iob_sents('esp.testb'))))
 
     # Create Dataset
     # labeled_sents = list(nltk.corpus.conll2002.iob_sents('esp.train'))[0:labeled_size]
     # pool_sents = list(nltk.corpus.conll2002.iob_sents('esp.train'))[labeled_size:labeled_size+pool_size]
     # test_sents = list(nltk.corpus.conll2002.iob_sents('esp.testb'))[0:test_size]
-    labeled_sents = random.sample(list(import_conll2003.iob_sents('./data/eng.testa')), labeled_size)
-    pool_sents = random.sample(list(import_conll2003.iob_sents('./data/eng.train')), pool_size)
-    test_sents = random.sample(list(import_conll2003.iob_sents('./data/eng.testb')), test_size)
+    labeled_sents = random.sample(list(nltk.corpus.conll2002.iob_sents('esp.testa')), labeled_size)
+    pool_sents = random.sample(list(nltk.corpus.conll2002.iob_sents('esp.train')), pool_size)
+    test_sents = random.sample(list(nltk.corpus.conll2002.iob_sents('esp.testb')), test_size)
 
     # Convert sentence to features
     X_labeled = [sent2features(s) for s in labeled_sents]
@@ -49,7 +49,7 @@ if __name__ == "__main__":
     print("--------------------------------------------")
     al_score.append(al_model.evaluation(X_test, y_test))
     # rs_score.append(rs_model.evaluation(X_test, y_test))
-    for _ in range(300):
+    for _ in range(150):
         al_model.query_selection()
         al_model.fit()
         print("al_model", al_model.evaluation(X_test, y_test))

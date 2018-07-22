@@ -1,21 +1,44 @@
 import sklearn_crfsuite
-from sklearn_crfsuite import metrics
+from sklearn.metrics import classification_report, confusion_matrix, f1_score
+from sklearn.preprocessing import LabelBinarizer
 import copy
 import numpy as np
 from least_confidence import calculate_least_confidences
 import random
 import pycrfsuite
+from itertools import chain
+from sklearn_crfsuite import metrics
+
+def bio_classification_report(y_true, y_pred):
+    """
+    Classification report for a list of BIO-encoded sequences.
+    It computes token-level metrics and discards "O" labels.
+
+    Note that it requires scikit-learn 0.15+ (or a version from github master)
+    to calculate averages properly!
+    """
+    lb = LabelBinarizer()
+    y_true_combined = lb.fit_transform(list(chain.from_iterable(y_true)))
+    y_pred_combined = lb.transform(list(chain.from_iterable(y_pred)))
+
+    tagset = set(lb.classes_) - {'O'}
+    tagset = sorted(tagset, key=lambda tag: tag.split('-', 1)[::-1])
+    class_indices = {cls: idx for idx, cls in enumerate(lb.classes_)}
+
+    return classification_report(
+        y_true_combined,
+        y_pred_combined,
+        labels = [class_indices[cls] for cls in tagset],
+        target_names = tagset,
+    )
 
 class RSModel:
     def __init__(self, X_labeled, y_labeled, X_pool, y_pool, query_size = 1):
-        random.seed(2)
+        random.seed(42)
         self.X_labeled, self.y_labeled = X_labeled, y_labeled
         self.X_pool, self.y_pool = X_pool, y_pool
         self.trainer = pycrfsuite.Trainer(verbose=False)
         self.trainer.set_params({
-            'c1': 1.0,
-            'c2': 1e-3,
-            'max_iterations': 50,
             'feature.possible_transitions': True
         })
         self.fit()
@@ -30,7 +53,10 @@ class RSModel:
         tagger = pycrfsuite.Tagger()
         tagger.open('rs-model.crfsuite')
         y_pred = [tagger.tag(xseq) for xseq in X_test]
-        return metrics.sequence_accuracy_score(y_test, y_pred)
+        labels = list(tagger.labels())
+        labels.remove('O')
+
+        return metrics.flat_f1_score(y_test, y_pred, average='weighted', labels=labels)
 
     def query_selection(self):
         if self.query_size > len(self.X_pool):
