@@ -35,7 +35,7 @@ def bio_classification_report(y_true, y_pred):
 class RSModel:
     def __init__(self, X_labeled, y_labeled, X_pool, y_pool, query_size = 1):
         random.seed(42)
-        self.X_labeled, self.y_labeled = X_labeled, y_labeled
+        self.X_train, self.y_train = X_labeled, y_labeled
         self.X_pool, self.y_pool = X_pool, y_pool
         self.trainer = pycrfsuite.Trainer(verbose=False)
         self.trainer.set_params({
@@ -45,7 +45,7 @@ class RSModel:
         self.query_size = query_size
 
     def fit(self):
-        for xseq, yseq in zip(self.X_labeled, self.y_labeled):
+        for xseq, yseq in zip(self.X_train, self.y_train):
             self.trainer.append(xseq, yseq)
         self.trainer.train('rs-model.crfsuite')
 
@@ -68,11 +68,12 @@ class RSModel:
         next_y_pool = copy.deepcopy(self.y_pool)
 
         delete_inds = []
+        X_train, y_train = [], []
         for random_ind in random.sample(range(pool_size), self.query_size):
             tmp_X = self.X_pool[random_ind]
             tmp_y = self.y_pool[random_ind]
-            self.X_labeled.append(tmp_X)
-            self.y_labeled.append(tmp_y)
+            X_train.append(tmp_X)
+            y_train.append(tmp_y)
             delete_inds.append(random_ind)
 
         delete_inds.sort(reverse = True)
@@ -82,3 +83,5 @@ class RSModel:
 
         self.X_pool = next_X_pool
         self.y_pool = next_y_pool
+        self.X_train = X_train
+        self.y_train = y_train

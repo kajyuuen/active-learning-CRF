@@ -44,7 +44,7 @@ class ALModel:
         self.query_size = query_size
 
     def fit(self):
-        for xseq, yseq in zip(self.X_labeled, self.y_labeled):
+        for xseq, yseq in zip(self.X_train, self.y_train):
             self.trainer.append(xseq, yseq)
         self.trainer.train('al-model.crfsuite')
 

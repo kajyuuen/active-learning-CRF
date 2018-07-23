@@ -5,23 +5,23 @@ def word2features(sent, i):
     features = {
         'bias': 1.0,
         'word.lower()': word.lower(),
-        #'word[-3:]': word[-3:],
-        #'word[-2:]': word[-2:],
+        'word[-3:]': word[-3:],
+        'word[-2:]': word[-2:],
         'word.isupper()': word.isupper(),
-        #'word.istitle()': word.istitle(),
-        #'word.isdigit()': word.isdigit(),
+        'word.istitle()': word.istitle(),
+        'word.isdigit()': word.isdigit(),
         'postag': postag,
-        #'postag[:2]': postag[:2],
+        'postag[:2]': postag[:2],
     }
     if i > 0:
         word1 = sent[i-1][0]
         postag1 = sent[i-1][1]
         features.update({
-            #'-1:word.lower()': word1.lower(),
-            #'-1:word.istitle()': word1.istitle(),
+            '-1:word.lower()': word1.lower(),
+            '-1:word.istitle()': word1.istitle(),
             '-1:word.isupper()': word1.isupper(),
             '-1:postag': postag1,
-            #'-1:postag[:2]': postag1[:2],
+            '-1:postag[:2]': postag1[:2],
         })
     else:
         features['BOS'] = True
@@ -30,11 +30,11 @@ def word2features(sent, i):
         word1 = sent[i+1][0]
         postag1 = sent[i+1][1]
         features.update({
-            #'+1:word.lower()': word1.lower(),
-            #'+1:word.istitle()': word1.istitle(),
+            '+1:word.lower()': word1.lower(),
+            '+1:word.istitle()': word1.istitle(),
             '+1:word.isupper()': word1.isupper(),
             '+1:postag': postag1,
-            #'+1:postag[:2]': postag1[:2],
+            '+1:postag[:2]': postag1[:2],
         })
     else:
         features['EOS'] = True
