@@ -1,0 +1,3 @@
+# active-learning-CRF
+
+CRFに対してRandom SamplingとUncertainly Samplingを用いたクエリ戦略を行ったときの実験スクリプト
